@@ -6,9 +6,14 @@ ADD ["sources.list", "/etc/apt/sources.list"]
 
 RUN set -x && \
     apt-get update && apt-get install -y --no-install-recommends ca-certificates curl && \
-    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /var/lib/apt/lists/* 
+    # chmod +x /usr/local/bin/peer-finder && \
+    # \
+    
+    #apt-get purge -y --auto-remove ca-certificates wget
 
 ADD ["galera/", "/opt/galera/"]
+
 ADD ["galera-peer-finder/galera-peer-finder", "/"]
 ADD ["peer-finder", "/usr/local/bin/"]
 
