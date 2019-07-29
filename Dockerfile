@@ -5,12 +5,9 @@ RUN cp /etc/apt/sources.list /etc/apt/sources_init.list
 ADD ["sources.list", "/etc/apt/sources.list"]
 
 RUN set -x && \
-    apt-get update && apt-get install -y --no-install-recommends ca-certificates curl && \
-    rm -rf /var/lib/apt/lists/* 
-    # chmod +x /usr/local/bin/peer-finder && \
-    # \
-    
-    #apt-get purge -y --auto-remove ca-certificates wget
+    apt-get update && apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/* && \
+
 
 ADD ["galera/", "/opt/galera/"]
 
