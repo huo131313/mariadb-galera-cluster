@@ -2,88 +2,94 @@
 
 first_start_node=""
 
+
+all_node_names=("mysql-0.galera.default.svc.cluster.local" "mysql-1.galera.default.svc.cluster.local" "mysql-2.galera.default.svc.cluster.local") 
+
 log() {
 	local msg="myinit.sh: $@"
 	echo "$msg" >&2
 }
 
-### begin  3 个数据库都没有启动 ， 如果有一个启动了 ， 直接0 常规启动
-mysql_host="mysql-0.galera.default.svc.cluster.local"  
-if echo 'SELECT 1' | mysql -uroot -p123456a? -h${mysql_host}  &> /dev/null; then
-    log 'MySQL 0 has been started ...'
-    echo "MySQL 0 has been started ..."
-    exit 0
-fi
+### begin  3 个数据库都没有启动 ， 如果有一个启动了 ， 直接0 , 常规启动就ok
+for node_name in ${all_node_names[@]} 
+do
+    if echo 'SELECT 1' | mysql -uroot -p123456a? -h${node_name}  &> /dev/null; then
+        log "$node_name has been started ..."
+        echo "$node_name has been started ..."
+        exit 0   
+    fi
+done
 
-mysql_host="mysql-1.galera.default.svc.cluster.local" 
-if echo 'SELECT 1' | mysql -uroot -p123456a? -h${mysql_host}  &> /dev/null; then
-    log 'MySQL 1 has been started ...'
-    echo "MySQL 1 has been started ..."
-    exit 0
-fi
-
-mysql_host="mysql-2.galera.default.svc.cluster.local"
-if echo 'SELECT 1' | mysql -uroot -p123456a? -h${mysql_host}  &> /dev/null; then
-    log 'MySQL 2 has been started ...'
-    echo "MySQL 2 has been started ..."
-    exit 0
-fi
-
-###### 
-localname=$(hostname)
+###############    ###############
+hostname=$(hostname)
+local_wsrep_position="$xxxx;$hostname"
+echo "local_wsrep_position :  $local_wsrep_position "
 
 ###### 读目录下的文件， 直到3个节点都写入 ####
-for i in {300..0}; do
-    mysql_start_pos_opt_files_len=`ls -l /middle/ | grep mysql |grep "^-"|wc -l`
-    if [ $mysql_start_pos_opt_files_len = 3 ];then
-        break
-    fi
+# for i in {300..0}; do
+#     mysql_start_pos_opt_files_len=`ls -l /middle/ | grep mysql |grep "^-"|wc -l`
+#     if [ $mysql_start_pos_opt_files_len = 3 ];then
+#         break
+#     fi
 
-    log "mysql_start_pos_opt_files_len $i is $mysql_start_pos_opt_files_len < 3"
-    sleep 1
-done
+#     log "mysql_start_pos_opt_files_len $i is $mysql_start_pos_opt_files_len < 3"
+#     sleep 1
+# done   curl -s -w"%{http_code}n" -o/dev/null http://localhost:8899/wsrep
 
-#若i为0值，则表明验证失败
-if [ "$i" = 0 ]; then
-    exit 1
-fi
+#mkfifo tmpFifo 管道临时文件
 
-mysql_header_name=
-mysql_header_value=
-for filename in $(ls /middle/ | grep mysql)
+echo "" > tmpFifo
+wsrep_result="$local_wsrep_position" # 初始化本节点
+for _node_name in ${all_node_names[@]} 
 do
-    start_pos_opt_tmp=$(cat /middle/$filename)
-    start_pos_opt_tmp="${start_pos_opt_tmp:-0}"
-    log "file: $filename $start_pos_opt_tmp"
-
-    if [ ! -n "$mysql_header_name" ]; then
-        mysql_header_value=$start_pos_opt_tmp
-        mysql_header_name=$filename
+   if [ $_node_name == "*$localname" ]; then # 把自己排除出来， 不用获取自己的数据
         continue
-    fi
+   fi
 
-    if [ "$start_pos_opt_tmp" \> "$mysql_header_value" ]
-    then
-        mysql_header_value=$start_pos_opt_tmp
-        mysql_header_name=$filename
-    else
-        if [ "$start_pos_opt_tmp" = "$mysql_header_value" ] && [ "$mysql_header_name" \> "$filename" ]
-        then
-          mysql_header_value=$start_pos_opt_tmp
-          mysql_header_name=$filename
+   while [ "1" = "1" ]
+   do
+        http_code=`curl -s -w "%{http_code}" -o tmpFifo  http://localhost:8899/wsrep`
+        echo "$http_code    --- `cat tmpFifo` "
+        if [ $http_code != 200 ]; then # 没有正常返回， 接着取
+            continue;
         fi
-    fi
+
+        #取到结果
+        tmp_wsrep=`cat tmpFifo`
+        
+        if [ "$tmpFifo" \> "$wsrep_result" ];then
+            wsrep_result=$tmpFifo;
+        fi
+
+        break
+   done
 done
 
-log "first start mysql is : $mysql_header_name  $mysql_header_value"
-if [ "$localname" !=  "$mysql_header_name" ];then
-    log "I'm $localname , isn't the first node "
-    exit 1
+echo “ result -----  $wsrep_result ---- ”
+
+#如果选举的节点 最后是本节点则 返回 1 , 等着
+if [ $wsrep_result != "$local_wsrep_position" ] ; then
+
+    while [ "1" = "1" ]
+    do
+        ### begin  3 个数据库都没有启动 ， 如果有一个启动了 ， 直接0 , 常规启动就ok
+        for node_name in ${all_node_names[@]} 
+        do
+            if [ $_node_name == "*$localname" ]; then # 把自己排除出来， 不检查
+                continue
+            fi
+
+            if echo 'SELECT 1' | mysql -uroot -p123456a? -h${node_name}  &> /dev/null; then
+                log "$node_name has been started ..."
+                echo "$node_name has been started ..."
+                exit 0   
+            fi
+        done
+    done
 fi
 
-log " I am the first node is : $localname"
-`rm -rf /middle/mysql*`  #选举完成后， 删除生成的临时文件 ?????
-echo "cant start  , is first_start_node"
+#如果选举的节点 最后是本节点则 返回成功 开始启动
+exit 0;  # 成功启动
 
 
 

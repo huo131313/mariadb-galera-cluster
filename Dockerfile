@@ -11,9 +11,12 @@ RUN set -x && \
     wget -O /usr/local/bin/peer-finder https://storage.googleapis.com/kubernetes-release/pets/peer-finder && \
     chmod +x /usr/local/bin/peer-finder && \
     \
-    apt-get purge -y --auto-remove ca-certificates wget
+    
+    #apt-get purge -y --auto-remove ca-certificates wget
 
 ADD ["galera/", "/opt/galera/"]
+ADD ["galera-peer-finder/galera-peer-finder", "/"]
+
 
 RUN set -x && \
     cd /opt/galera && chmod +x *.sh
@@ -27,5 +30,4 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /myinit.sh
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-
 CMD ["mysqld"]

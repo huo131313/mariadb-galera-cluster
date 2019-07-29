@@ -126,6 +126,10 @@ if [ "$1" = 'mysqld' -a -z "$wantHelp" ]; then
 		if [ $? -eq 0 ]; then
 			echo "Galera recovery position: $start_pos_opt"
 			set -- "$@" $start_pos_opt
+
+			//启动rest 服务， 供查询使用
+			$(galera-peer-finder -position=$start_pos_opt)
+	
 		else
 			echo "FATAL - Galera recovery failed!"
 			exit 1
