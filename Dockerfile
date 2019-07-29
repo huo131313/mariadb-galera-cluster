@@ -11,11 +11,10 @@ RUN set -x && \
 
 ADD ["galera/", "/opt/galera/"]
 
-ADD ["galera-peer-finder/galera-peer-finder", "/"]
+ADD ["galera-peer-finder/galera-peer-finder", "/usr/local/bin/"]
 ADD ["peer-finder", "/usr/local/bin/"]
 
-RUN chmod +x /usr/local/bin/peer-finder /galera-peer-finder
-
+RUN chmod +x /usr/local/bin/peer-finder /usr/local/bin/galera-peer-finder
 
 RUN set -x && \
     cd /opt/galera && chmod +x *.sh
