@@ -104,7 +104,7 @@ spec:
           mountPath: /etc/mysql/conf.d
       containers:
       - name: mysql
-        image: mariadb-galera-cluster:10.3.16.5
+        image: mariadb-galera-cluster:10.3.16.6
         ports:
         - containerPort: 3306
           name: mysql
