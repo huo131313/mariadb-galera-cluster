@@ -38,7 +38,7 @@ echo "local_wsrep_position :  $local_wsrep_position "
 
 #mkfifo tmpFifo 管道临时文件
 
-echo "" > tmpFifo
+echo "" > /tmp/tmpFile
 wsrep_result="$local_wsrep_position" # 初始化本节点
 for _node_name in ${all_node_names[@]} 
 do
@@ -48,14 +48,14 @@ do
 
    while [ "1" = "1" ]
    do
-        http_code=`curl -s -w "%{http_code}" -o tmpFifo  http://localhost:8899/wsrep`
-        echo "$http_code    --- `cat tmpFifo` "
+        http_code=`curl -s -w "%{http_code}" -o /tmp/tmpFile  http://localhost:8899/wsrep`
+        echo "$http_code    --- `cat /tmp/tmpFile` "
         if [ $http_code != 200 ]; then # 没有正常返回， 接着取
             continue;
         fi
 
         #取到结果
-        tmp_wsrep=`cat tmpFifo`
+        tmp_wsrep=`cat /tmp/tmpFile`
         
         if [ "$tmpFifo" \> "$wsrep_result" ];then
             wsrep_result=$tmpFifo;
