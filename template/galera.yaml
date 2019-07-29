@@ -1,0 +1,163 @@
+#
+# MariaDB 10.x Galera Cluster
+#
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+  name: galera
+  labels:
+    app: mysql
+spec:
+  ports:
+  - port: 3306
+    name: mysql
+  clusterIP: None
+  selector:
+    app: mysql
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+  name: galera-frontend
+  labels:
+    app: mysql
+spec:
+  type: NodePort
+  ports:
+  - port: 3306
+    targetPort: 3306
+    nodePort: 31586
+    name: mysql
+  selector:
+    app: mysql
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config-vol
+data:
+  galera.cnf: |
+    [galera]
+    user = mysql
+    bind-address = 0.0.0.0
+
+    default_storage_engine = InnoDB
+    binlog_format = ROW
+    innodb_autoinc_lock_mode = 2
+    innodb_flush_log_at_trx_commit = 0
+    query_cache_size = 0
+    query_cache_type = 0
+
+    # MariaDB Galera settings
+    wsrep_on=ON
+    wsrep_provider=/usr/lib/galera/libgalera_smm.so
+    wsrep_sst_method=rsync
+
+    # Cluster settings (automatically updated)
+    wsrep_cluster_address=gcomm://
+    wsrep_cluster_name=galera
+    wsrep_node_address=127.0.0.1
+    # new
+    wsrep_retry_autocommit=1000
+    innodb_flush_log_at_trx_commit=0
+    wsrep_provider_options=gcs.fc_factor=0.8;gcs.fc_limit=200;gcache.size=1536M
+  mariadb.cnf: |
+    [client]
+    default-character-set = utf8
+    [mysqld]
+    # tuning
+    expire_logs_days=7 
+    max-connections = 10000
+    open-files-limit = 10000
+    character-set-server = utf8
+    collation-server = utf8_bin
+    # InnoDB tuning
+    innodb_log_file_size = 50M
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: mysql
+spec:
+  serviceName: "galera"
+  replicas: 3
+  podManagementPolicy:  "Parallel"
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      nodeName: k8s3
+      initContainers:
+      - name: copy-mariadb-config
+        image: busybox:latest
+        command: ['sh', '-c', 'cp /configmap/* /etc/mysql/conf.d']
+        volumeMounts:
+        - name: configmap
+          mountPath: /configmap
+        - name: config
+          mountPath: /etc/mysql/conf.d
+      containers:
+      - name: mysql
+        image: mariadb-galera-cluster:10.3.16.5
+        ports:
+        - containerPort: 3306
+          name: mysql
+        - containerPort: 4444
+          name: sst
+        - containerPort: 4567
+          name: replication
+        - containerPort: 4568
+          name: ist
+        env:
+        - name: TZ
+          value: Asia/Shanghai
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql
+              key: password
+        readinessProbe:
+          exec:
+            command: ["bash", "-c", "mysql -uroot -p\"${MYSQL_ROOT_PASSWORD}\" -e 'show databases;'"]
+          initialDelaySeconds: 20
+          timeoutSeconds: 5
+        volumeMounts:
+        - name: config
+          mountPath: /etc/mysql/conf.d
+        - name: datadir
+          mountPath: /var/lib/mysql
+        - name: middle-data
+          mountPath: /middle/
+      volumes:
+      - name: config
+        emptyDir: {}
+      - name: configmap
+        configMap:
+          name: mysql-config-vol
+          items:
+            - path: "galera.cnf"
+              key: galera.cnf
+            - path: "mariadb.cnf"
+              key: mariadb.cnf
+      - name: middle-data
+        persistentVolumeClaim:
+          claimName: middle-data
+  volumeClaimTemplates:
+  - metadata:
+      name: datadir
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 30Gi
