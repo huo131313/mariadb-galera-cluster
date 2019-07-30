@@ -108,6 +108,11 @@ if [ $wsrep_result != "$local_hostname" ] ; then
             fi
         done
     done
+else
+    # Run Galera auto-discovery on Kubernetes
+	if hash peer-finder 2>/dev/null; then
+		peer-finder -on-start=/opt/galera/on-start-first.sh -service="${GALERA_SERVICE:-galera}"
+	fi
 fi
 
 #如果选举的节点 最后是本节点则 返回成功 开始启动
