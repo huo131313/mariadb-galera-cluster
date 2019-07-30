@@ -20,11 +20,6 @@ do
     fi
 done
 
-#######################    ###############
-hostname=$(hostname)
-local_wsrep_position="$xxxx;$hostname"
-echo "local_wsrep_position :  $local_wsrep_position "
-
 ###### 读目录下的文件， 直到3个节点都写入 ####
 # for i in {300..0}; do
 #     mysql_start_pos_opt_files_len=`ls -l /middle/ | grep mysql |grep "^-"|wc -l`
@@ -38,11 +33,16 @@ echo "local_wsrep_position :  $local_wsrep_position "
 
 #mkfifo tmpFifo 管道临时文件
 
+#######################    ###############
+local_hostname=$(hostname)
+local_wsrep_position="$1"  
+echo "local_wsrep_position :  $local_hostname $local_wsrep_position "
+
 echo "" > /tmp/tmpFile
-wsrep_result="$local_wsrep_position" # 初始化本节点
+wsrep_result="$local_hostname" # 初始化本节点
 for _node_name in ${all_node_names[@]} 
 do
-   if [ $_node_name == "*$hostname" ]; then # 把自己排除出来， 不用获取自己的数据
+   if [ $_node_name == "*$local_hostname*" ]; then # 把自己排除出来， 不用获取自己的数据
         continue
    fi
 
@@ -59,20 +59,32 @@ do
 
         #取到结果
         tmp_wsrep=`cat /tmp/tmpFile`
-        echo "$http_code    ---   $tmp_wsrep "
-        
-        if [ "$tmpFifo" \> "$wsrep_result" ];then
-            wsrep_result=$tmpFifo;
+        echo "$http_code    ---   $tmp_wsrep"
+
+
+        wsrep_array=(${tmp_wsrep//:/ })
+        wsrep_position=${wsrep_array[1]}
+        wsrep_node=${wsrep_array[2]}
+
+        ## 本节点 number 大
+        if [ $local_wsrep_position -gt $wsrep_position]; then
+            break;
         fi
 
+        ###  number 相同 ， 取 hostname 小的节点
+        if [ $local_wsrep_position -eq $wsrep_position ] && [ "$wsrep_node" /> "$local_hostname" ]; then
+            break;
+        fi
+
+        wsrep_result=$wsrep_node
         break
    done
 done
 
 echo “ result -----  $wsrep_result ---- ”
 
-#如果选举的节点 最后是本节点则 返回 1 , 等着
-if [ $wsrep_result != "$local_wsrep_position" ] ; then
+#如果选举的节点 最后是本节点则 则执行, 否则等到有一个节点起来了，再启动
+if [ $wsrep_result != "$local_hostname" ] ; then
 
     while [ "1" = "1" ]
     do
