@@ -37,6 +37,7 @@ done
 local_hostname=$(hostname)
 ###################  本节点  wsrep  position   ###############      
 local_wsrep_position=0
+echo "init args: $1"
 if  [ $1 ] ; then
     local_wsrep_array=(${1//:/ })
     local_wsrep_position=${local_wsrep_array[1]}
@@ -71,6 +72,9 @@ do
         wsrep_array=(${tmp_wsrep//:/ })
         wsrep_position=${wsrep_array[1]}
         wsrep_node=${wsrep_array[2]}
+        echo "1 2 : $wsrep_position  $wsrep_node"
+
+
 
         ## 本节点 number 大
         if [ $local_wsrep_position -gt $wsrep_position ]; then

@@ -101,9 +101,7 @@ exit 1
 
 
 
-
-
-
+echo "show global status 'WSREP_READY';" | mysql -uroot -p123456a? -hk8s3 -P31586
 
 
 
