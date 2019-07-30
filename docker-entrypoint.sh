@@ -136,10 +136,6 @@ if [ "$1" = 'mysqld' -a -z "$wantHelp" ]; then
 		fi
 	fi
 
-	localname=$(hostname)
-	echo "middle files: $localname   $start_pos_opt "
-	echo "$start_pos_opt" > /middle/$localname
-
 	# Get config
 	DATADIR="$(_datadir "$@")"
 	echo "DATADIR is : $DATADIR"

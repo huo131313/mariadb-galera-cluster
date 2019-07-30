@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	position    = flag.String("position", "0", "The wsrep start position.")
+	position    = flag.String("position", "0:0", "The wsrep start position.")
 )
 
 func getWsrepStartPosition(w http.ResponseWriter, r *http.Request) {
@@ -26,13 +26,13 @@ func getWsrepStartPosition(w http.ResponseWriter, r *http.Request) {
 	//if ns == "" {
 	//	ns = os.Getenv("POD_NAMESPACE")
 	//}
-	
+
 	hostname, err := os.Hostname()
 	if err != nil {
 		log.Fatalf("Failed to get hostname: %s", err)
 	}
 
-	fmt.Fprintf(w,  *position + ";" + hostname) //这个写入到w的是输出到客户端的
+	fmt.Fprintf(w,  *position + ":" + hostname) //这个写入到w的是输出到客户端的
 }
 
 func getDomain() {
