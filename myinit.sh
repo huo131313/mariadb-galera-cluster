@@ -33,9 +33,15 @@ done
 
 #mkfifo tmpFifo 管道临时文件
 
-#######################    ###############
+####################### 本节点 host name     ###############
 local_hostname=$(hostname)
-local_wsrep_position="$1"  
+###################  本节点  wsrep  position   ###############      
+local_wsrep_position=0
+if  [ $1 ] ; then
+    local_wsrep_array=(${1//:/ })
+    local_wsrep_position=${local_wsrep_array[1]}
+fi
+ 
 echo "local_wsrep_position :  $local_hostname $local_wsrep_position "
 
 echo "" > /tmp/tmpFile
@@ -67,7 +73,7 @@ do
         wsrep_node=${wsrep_array[2]}
 
         ## 本节点 number 大
-        if [ $local_wsrep_position -gt $wsrep_position]; then
+        if [ $local_wsrep_position -gt $wsrep_position ]; then
             break;
         fi
 
