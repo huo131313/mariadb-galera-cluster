@@ -128,7 +128,7 @@ if [ "$1" = 'mysqld' -a -z "$wantHelp" ]; then
 			set -- "$@" $start_pos_opt
 
 			#启动rest 服务， 供查询使用
-			$(galera-peer-finder -position=$start_pos_opt &)
+			nohup galera-peer-finder -position=$start_pos_opt &
 	
 		else
 			echo "FATAL - Galera recovery failed!"
