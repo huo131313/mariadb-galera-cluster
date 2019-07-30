@@ -42,7 +42,7 @@ echo "" > /tmp/tmpFile
 wsrep_result="$local_wsrep_position" # 初始化本节点
 for _node_name in ${all_node_names[@]} 
 do
-   if [ $_node_name == "*$localname" ]; then # 把自己排除出来， 不用获取自己的数据
+   if [ $_node_name == "*$hostname" ]; then # 把自己排除出来， 不用获取自己的数据
         continue
    fi
 
