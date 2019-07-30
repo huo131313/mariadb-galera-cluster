@@ -26,7 +26,7 @@ func getWsrepStartPosition(w http.ResponseWriter, r *http.Request) {
 	//if ns == "" {
 	//	ns = os.Getenv("POD_NAMESPACE")
 	//}
-
+	
 	hostname, err := os.Hostname()
 	if err != nil {
 		log.Fatalf("Failed to get hostname: %s", err)
@@ -82,6 +82,9 @@ func getDomain() {
 }
 
 func main() {
+
+	flag.Parse()
+
 	http.HandleFunc("/wsrep", getWsrepStartPosition) //设置访问的路由
 	err := http.ListenAndServe(":8899", nil) //设置监听的端口
 	if err != nil {

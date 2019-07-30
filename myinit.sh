@@ -53,11 +53,11 @@ do
         # curl -s -w "%{http_code}" -o /tmp/tmpFile  http://mysql-2.galera.default.svc.cluster.local:8899/wsrep
         http_code=`curl -s -w "%{http_code}" -o /tmp/tmpFile  http://$_node_name:8899/wsrep`
         echo "$http_code    --- `cat /tmp/tmpFile` "
-        if [ $http_code != 200 ]; then # 没有正常返回， 接着取
+        if [ "$http_code" != "200" ]; then # 没有正常返回， 接着取
             continue;
         fi
 
-        
+
 
         #取到结果
         tmp_wsrep=`cat /tmp/tmpFile`
