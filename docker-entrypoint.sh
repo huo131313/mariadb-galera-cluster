@@ -124,6 +124,7 @@ _select_start_node() {
 				# curl -s -w "%{http_code}" -o /tmp/tmpFile  http://mysql-0.galera.default.svc.cluster.local:8899/wsrep
 				# curl -s -w "%{http_code}" -o /tmp/tmpFile  http://mysql-1.galera.default.svc.cluster.local:8899/wsrep
 				# curl -s -w "%{http_code}" -o /tmp/tmpFile  http://mysql-2.galera.default.svc.cluster.local:8899/wsrep
+				echo "curl -s -w "%{http_code}" -o /tmp/tmpFile  http://$_node_name:8899/wsrepssss"
 				http_code=`curl -s -w "%{http_code}" -o /tmp/tmpFile  http://$_node_name:8899/wsrep`
 				if [ "$http_code" != "200" ]; then # 没有正常返回， 接着取
 					echo "curl failed : $http_code"
