@@ -260,9 +260,9 @@ fi
 
 
 echo " ----------------begin myinit.sh ----------------------"
-can_start=$(/myinit.sh $start_pos_opt)
+can_start=$(/myinit.sh $start_pos_opt $MYSQL_ROOT_PASSWORD)
 if [ $? -eq 0 ]; then
-	echo "entrypoints.sh xxxxxxxx : $can_start $MYSQL_ROOT_PASSWORD"
+	echo "entrypoints.sh xxxxxxxx : $can_start"
 	# 正式启动数据库
 	echo "finally exec: $@"
 	exec "$@"
