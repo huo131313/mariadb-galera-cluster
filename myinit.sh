@@ -49,7 +49,8 @@ echo "" > /tmp/tmpFile
 wsrep_result="$local_hostname" # 初始化本节点
 for _node_name in ${all_node_names[@]} 
 do
-   if [ $_node_name == "*$local_hostname*" ]; then # 把自己排除出来， 不用获取自己的数据
+   if [[ "${_node_name}" == *"${local_hostname}"* ]]; then # 把自己排除出来， 不用获取自己的数据
+        echo  "exclude myself $_node_name"
         continue
    fi
 
@@ -73,7 +74,6 @@ do
         wsrep_position=${wsrep_array[1]}
         wsrep_node=${wsrep_array[2]}
         echo "1 2 : $wsrep_position  $wsrep_node"
-
 
 
         ## 本节点 number 大
@@ -101,13 +101,20 @@ if [ $wsrep_result != "$local_hostname" ] ; then
         ### begin  3 个数据库都没有启动 ， 如果有一个启动了 ， 直接0 , 常规启动就ok
         for node_name in ${all_node_names[@]} 
         do
-            if [ $_node_name == "*$localname" ]; then # 把自己排除出来， 不检查
+            if [[ "${_node_name}" == *"${localname}"* ]]; then # 把自己排除出来， 不检查
+                echo  "exclude myself $_node_name"
                 continue
             fi
 
             if echo 'SELECT 1' | mysql -uroot -p123456a? -h${node_name}  &> /dev/null; then
                 log "$node_name has been started ..."
                 echo "$node_name has been started ..."
+
+                # Run Galera auto-discovery on Kubernetes
+                if hash peer-finder 2>/dev/null; then
+                    peer-finder -on-start=/opt/galera/on-start.sh -service="${GALERA_SERVICE:-galera}"
+                fi
+
                 exit 0   
             fi
         done

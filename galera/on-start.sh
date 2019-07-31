@@ -2,9 +2,11 @@
 
 GALERA_CONF="${GALERA_CONF:-"/etc/mysql/conf.d/galera.cnf"}"
 
-if ! [ -f "${GALERA_CONF}" ]; then 
-    cp /opt/galera/galera.cnf "${GALERA_CONF}"
+if [ -f "${GALERA_CONF}" ]; then 
+    rm -rf ${GALERA_CONF}
 fi
+
+cp /opt/galera/galera.cnf "${GALERA_CONF}"
 
 function join {
     local IFS="$1"; shift; echo "$*";
