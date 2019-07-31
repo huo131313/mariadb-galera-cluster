@@ -66,8 +66,8 @@ data:
     wsrep_node_address=127.0.0.1
     # new
     wsrep_retry_autocommit=1000
-    innodb_flush_log_at_trx_commit=0
-    wsrep_provider_options=gcs.fc_factor=0.8;gcs.fc_limit=200;gcache.size=1536M
+    # default 8
+    wsrep_slave_threads=8
   mariadb.cnf: |
     [client]
     default-character-set = utf8
