@@ -82,7 +82,7 @@ do
         fi
 
         ###  number 相同 ， 取 hostname 小的节点
-        if [ $local_wsrep_position -eq $wsrep_position ] && [ "$wsrep_node" /> "$local_hostname" ]; then
+        if [ $local_wsrep_position -eq $wsrep_position ] && [ "$wsrep_node" \> "$local_hostname" ]; then
             break;
         fi
 
