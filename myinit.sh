@@ -8,7 +8,7 @@ _mysql_pwd=$2
 ### begin  3 个数据库都没有启动 ， 如果有一个启动了 ， 直接0 , 常规启动就ok
 for _f_node_name in ${all_node_names[@]} 
 do
-    if echo 'SELECT 1' | mysql -uroot -p${_mysql_pwd} -h${_f_node_name}  &> /dev/null; then
+    if echo 'SELECT 1' | mysql -uroot -p123456a? -h${_f_node_name}  &> /dev/null; then
         echo "$_f_node_name has been started ..."
         exit 0  
     fi
@@ -90,7 +90,7 @@ if [ $wsrep_result != "$local_hostname" ] ; then
                 continue
             fi
 
-            if echo 'SELECT 1' | mysql -uroot -p${_mysql_pwd} -h${_ss_node_name}  &> /dev/null; then
+            if echo 'SELECT 1' | mysql -uroot -p123456a? -h${_ss_node_name}  &> /dev/null; then
                 echo "$_ss_node_name has been started ..."
 
                 # Run Galera at non-first node on Kubernetes
