@@ -81,8 +81,8 @@ do
             break;
         fi
 
-        ###  number 相同 ， 取 hostname 小的节点
-        if [ $local_wsrep_position -eq $wsrep_position ] && [ "$wsrep_node" \> "$local_hostname" ]; then
+        ###  number 相同 ， 取 hostname 小的节点 FINAL=`echo ${STR: -1}`
+        if [ $local_wsrep_position -eq $wsrep_position ] && [ ${wsrep_node: -1} -gt ${local_hostname: -1} ]; then
             break;
         fi
 
