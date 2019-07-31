@@ -2,7 +2,7 @@
 
 GALERA_CONF="${GALERA_CONF:-"/etc/mysql/conf.d/galera.cnf"}"
 
-if ![ -f "${GALERA_CONF}" ]; then 
+if ! [ -f "${GALERA_CONF}" ]; then 
     cp /opt/galera/galera.cnf "${GALERA_CONF}"
 fi
 
