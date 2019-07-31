@@ -29,7 +29,7 @@ echo "local_wsrep_position :  $local_hostname $local_wsrep_position "
 echo "" > /tmp/tmpFile
 wsrep_result="$local_hostname" # 初始化本节点
 
-echo "begin loop all nodes and find the first node  that allow start"
+#echo "begin loop all nodes and find the first node  that allow start"
 for _node_name in ${all_node_names[@]} 
 do
     if [[ "${_node_name}" == *"${local_hostname}"* ]]; then # 把自己排除出来， 不用获取自己的数据
@@ -73,9 +73,9 @@ do
             break
     done
 done
-echo " end loop all nodes and find the first node  that allow start"
+#echo " end loop all nodes and find the first node  that allow start"
 
-echo "the first node should be  $wsrep_result "
+#echo "the first node should be  $wsrep_result "
 
 #如果选举的节点 最后是本节点则 则执行, 否则等到有一个节点起来了，再启动
 if [ $wsrep_result != "$local_hostname" ] ; then
@@ -99,7 +99,7 @@ if [ $wsrep_result != "$local_hostname" ] ; then
                 fi
 
                 echo " the other node begin start:  $local_hostname"
-
+                
                 exit 0   
             fi
         done
