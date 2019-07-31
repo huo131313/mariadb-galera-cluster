@@ -3,7 +3,7 @@
 all_node_names=("mysql-0.galera.default.svc.cluster.local" "mysql-1.galera.default.svc.cluster.local" "mysql-2.galera.default.svc.cluster.local") 
 
 
-_mysql_pwd = $2
+_mysql_pwd=$2
 
 ### begin  3 个数据库都没有启动 ， 如果有一个启动了 ， 直接0 , 常规启动就ok
 for _f_node_name in ${all_node_names[@]} 
