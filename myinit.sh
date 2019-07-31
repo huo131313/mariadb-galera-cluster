@@ -9,7 +9,7 @@ all_node_names=("mysql-0.galera.default.svc.cluster.local" "mysql-1.galera.defau
 	do
 		if echo 'SELECT 1' | mysql -uroot -p123456a? -h${node_name}  &> /dev/null; then
 			echo "$node_name has been started ..."
-			return  
+			exit 0  
 		fi
 	done
 
@@ -98,7 +98,7 @@ all_node_names=("mysql-0.galera.default.svc.cluster.local" "mysql-1.galera.defau
 						peer-finder -on-start=/opt/galera/on-start.sh -service="${GALERA_SERVICE:-galera}"
 					fi
 
-					return   
+					exit 0   
 				fi
 			done
 		done
@@ -109,7 +109,7 @@ all_node_names=("mysql-0.galera.default.svc.cluster.local" "mysql-1.galera.defau
 		fi
 	fi
 
-
+exit 0
 
 
 
