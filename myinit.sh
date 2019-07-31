@@ -83,15 +83,15 @@ all_node_names=("mysql-0.galera.default.svc.cluster.local" "mysql-1.galera.defau
 		while [ "1" = "1" ]
 		do
 			### begin  3 个数据库都没有启动 ， 如果有一个启动了 ， 直接0 , 常规启动就ok
-			for node_name in ${all_node_names[@]} 
+			for _ss_node_name in ${all_node_names[@]} 
 			do
-				if [[ "${_node_name}" == *"${localname}"* ]]; then # 把自己排除出来， 不检查
-					echo  "exclude myself $_node_name"
+				if [[ "${_ss_node_name}" == *"${local_hostname}"* ]]; then # 把自己排除出来， 不检查
+					echo  "exclude myself $_ss_node_name"
 					continue
 				fi
 
-				if echo 'SELECT 1' | mysql -uroot -p123456a? -h${node_name}  &> /dev/null; then
-					echo "$node_name has been started ..."
+				if echo 'SELECT 1' | mysql -uroot -p123456a? -h${_ss_node_name}  &> /dev/null; then
+					echo "$_ss_node_name has been started ..."
 
 					# Run Galera at non-first node on Kubernetes
 					if hash peer-finder 2>/dev/null; then
