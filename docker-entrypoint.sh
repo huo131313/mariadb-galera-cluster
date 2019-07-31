@@ -259,7 +259,7 @@ fi
 #####  三个节点都启动。 并且都不能访问数据库，判断哪个 start_pos_opt 最大， 先启动，其它节点等着。 
 echo " ----------------begin myinit.sh ----------------------"
 set +e  ###
-$(/myinit.sh $start_pos_opt)
+can_start=$(/myinit.sh $start_pos_opt)
 set -e
 if [ $? -eq 0 ]; then
 	# 正式启动数据库

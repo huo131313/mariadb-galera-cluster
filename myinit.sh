@@ -2,7 +2,7 @@
 
 all_node_names=("mysql-0.galera.default.svc.cluster.local" "mysql-1.galera.default.svc.cluster.local" "mysql-2.galera.default.svc.cluster.local") 
 
-echo "test   test     test    test     test "
+echo "----- test   test     test    test     test "
 
 ### begin  3 个数据库都没有启动 ， 如果有一个启动了 ， 直接0 , 常规启动就ok
 for node_name in ${all_node_names[@]} 
