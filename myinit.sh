@@ -42,10 +42,10 @@ all_node_names=("mysql-0.galera.default.svc.cluster.local" "mysql-1.galera.defau
 				# curl -s -w "%{http_code}" -o /tmp/tmpFile  http://mysql-0.galera.default.svc.cluster.local:8899/wsrep
 				# curl -s -w "%{http_code}" -o /tmp/tmpFile  http://mysql-1.galera.default.svc.cluster.local:8899/wsrep
 				# curl -s -w "%{http_code}" -o /tmp/tmpFile  http://mysql-2.galera.default.svc.cluster.local:8899/wsrep
-				echo "curl -s -w "%{http_code}" -o /tmp/tmpFile  http://$_node_name:8899/wsrep"
+				#echo "curl -s -w "%{http_code}" -o /tmp/tmpFile  http://$_node_name:8899/wsrep"
 				http_code=`curl -s -w "%{http_code}" -o /tmp/tmpFile  http://$_node_name:8899/wsrep`
 				if [ "$http_code" != "200" ]; then # 没有正常返回， 接着取
-					echo "curl failed : $http_code"
+					#echo "curl failed : $http_code"
 					continue;
 				fi
 
@@ -56,8 +56,7 @@ all_node_names=("mysql-0.galera.default.svc.cluster.local" "mysql-1.galera.defau
 				wsrep_array=(${tmp_wsrep//:/ })
 				wsrep_position=${wsrep_array[1]}
 				wsrep_node=${wsrep_array[2]}
-				echo "1 2 : $wsrep_position  $wsrep_node"
-
+				#echo "1 2 : $wsrep_position  $wsrep_node"
 
 				## 本节点 number 大
 				if [ $local_wsrep_position -gt $wsrep_position ]; then
@@ -86,7 +85,7 @@ all_node_names=("mysql-0.galera.default.svc.cluster.local" "mysql-1.galera.defau
 			for _ss_node_name in ${all_node_names[@]} 
 			do
 				if [[ "${_ss_node_name}" == *"${local_hostname}"* ]]; then # 把自己排除出来， 不检查
-					echo  "exclude myself $_ss_node_name"
+                	#echo  "exclude myself $_ss_node_name"
 					continue
 				fi
 
