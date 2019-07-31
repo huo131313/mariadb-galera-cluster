@@ -258,6 +258,8 @@ fi
 ##### 并发启动时，首先把 每个几点获取到的  start_pos_opt 插入 共享的文件（etcd or go rest写个插件）
 #####  三个节点都启动。 并且都不能访问数据库，判断哪个 start_pos_opt 最大， 先启动，其它节点等着。 
 
+#######  wsrep_sst_method=mariabackup wsrep_sst_auth=  ########
+sed -i -e "s|^wsrep_sst_auth[[:space:]]*=.*$|wsrep_sst_auth=root:${MYSQL_ROOT_PASSWORD}|" "/etc/mysql/conf.d/galera.cnf"
 
 echo " ----------------begin myinit.sh ----------------------"
 can_start=$(/myinit.sh $start_pos_opt $MYSQL_ROOT_PASSWORD)

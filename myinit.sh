@@ -88,15 +88,12 @@ if [ $wsrep_result != "$local_hostname" ] ; then
             fi
 
             if echo 'SELECT 1' | mysql -uroot -p123456a? -h${_ss_node_name}  &> /dev/null; then
-                echo "$_ss_node_name has been started ..."
 
                 # Run Galera at non-first node on Kubernetes
                 if hash peer-finder 2>/dev/null; then
                 	peer-finder -on-start=/opt/galera/on-start.sh -service="${GALERA_SERVICE:-galera}"
                 fi
-
-                echo " the other node begin start:  $local_hostname"
-
+                echo "$_ss_node_name has been started , so begin start node : $local_hostname"
                 exit 0   
             fi
         done
@@ -112,17 +109,3 @@ else
 fi
 
 exit 0
-
-
-
-
-
-
-
-
-
-
-
-
-
-

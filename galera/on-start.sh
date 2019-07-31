@@ -2,9 +2,10 @@
 
 GALERA_CONF="${GALERA_CONF:-"/etc/mysql/conf.d/galera.cnf"}"
 
-if ! [ -f "${GALERA_CONF}" ]; then 
-    cp /opt/galera/galera.cnf "${GALERA_CONF}"
-fi
+### 必须 以 configmap 的形式  提供 galera.conf , 不提供默认配置
+# if ! [ -f "${GALERA_CONF}" ]; then 
+#     cp /opt/galera/galera.cnf "${GALERA_CONF}"
+# fi
 
 function join {
     local IFS="$1"; shift; echo "$*";
