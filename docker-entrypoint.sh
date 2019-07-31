@@ -98,12 +98,7 @@ if [ "$1" = 'mysqld' -a -z "$wantHelp" -a "$(id -u)" = '0' ]; then
 
 	# Run Galera auto-discovery on Kubernetes
 	if hash peer-finder 2>/dev/null; then
-		echo "is first node : $first_start_node"
-		#if [ ! -n "$first_start_node" ]; then
-		#    peer-finder -on-start=/opt/galera/on-start-first.sh -service="${GALERA_SERVICE:-galera}"
-		#else
-			peer-finder -on-start=/opt/galera/on-start.sh -service="${GALERA_SERVICE:-galera}"
-		#fi 
+		peer-finder -on-start=/opt/galera/on-start.sh -service="${GALERA_SERVICE:-galera}"
 	fi
 
 	chown -R mysql:mysql "$DATADIR"
@@ -264,10 +259,9 @@ fi
 #####  三个节点都启动。 并且都不能访问数据库，判断哪个 start_pos_opt 最大， 先启动，其它节点等着。 
 echo " ----------------begin myinit.sh ----------------------"
 set +e  ###
-can_start=$(/myinit.sh $start_pos_opt)
+$(/myinit.sh $start_pos_opt)
 set -e
 if [ $? -eq 0 ]; then
-	echo "entrypoints.sh : $can_start "
 	# 正式启动数据库
 	echo "finally exec: $@"
 	exec "$@"

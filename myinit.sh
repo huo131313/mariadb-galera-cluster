@@ -1,37 +1,17 @@
 #! /bin/bash
 
-first_start_node=""
-
-
 all_node_names=("mysql-0.galera.default.svc.cluster.local" "mysql-1.galera.default.svc.cluster.local" "mysql-2.galera.default.svc.cluster.local") 
 
-log() {
-	local msg="myinit.sh: $@"
-	echo "$msg" >&2
-}
+echo "test   test     test    test     test "
 
 ### begin  3 个数据库都没有启动 ， 如果有一个启动了 ， 直接0 , 常规启动就ok
 for node_name in ${all_node_names[@]} 
 do
     if echo 'SELECT 1' | mysql -uroot -p123456a? -h${node_name}  &> /dev/null; then
-        log "$node_name has been started ..."
         echo "$node_name has been started ..."
         exit 0   
     fi
 done
-
-###### 读目录下的文件， 直到3个节点都写入 ####
-# for i in {300..0}; do
-#     mysql_start_pos_opt_files_len=`ls -l /middle/ | grep mysql |grep "^-"|wc -l`
-#     if [ $mysql_start_pos_opt_files_len = 3 ];then
-#         break
-#     fi
-
-#     log "mysql_start_pos_opt_files_len $i is $mysql_start_pos_opt_files_len < 3"
-#     sleep 1
-# done   curl -s -w"%{http_code}n" -o/dev/null http://localhost:8899/wsrep
-
-#mkfifo tmpFifo 管道临时文件
 
 ####################### 本节点 host name     ###############
 local_hostname=$(hostname)
@@ -68,7 +48,6 @@ do
         #取到结果
         tmp_wsrep=`cat /tmp/tmpFile`
         echo "$http_code    ---   $tmp_wsrep"
-
 
         wsrep_array=(${tmp_wsrep//:/ })
         wsrep_position=${wsrep_array[1]}
@@ -107,10 +86,9 @@ if [ $wsrep_result != "$local_hostname" ] ; then
             fi
 
             if echo 'SELECT 1' | mysql -uroot -p123456a? -h${node_name}  &> /dev/null; then
-                log "$node_name has been started ..."
                 echo "$node_name has been started ..."
 
-                # Run Galera auto-discovery on Kubernetes
+                # Run Galera at non-first node on Kubernetes
                 if hash peer-finder 2>/dev/null; then
                     peer-finder -on-start=/opt/galera/on-start.sh -service="${GALERA_SERVICE:-galera}"
                 fi
@@ -120,7 +98,7 @@ if [ $wsrep_result != "$local_hostname" ] ; then
         done
     done
 else
-    # Run Galera auto-discovery on Kubernetes
+    # Run Galera at first node on Kubernetes
 	if hash peer-finder 2>/dev/null; then
 		peer-finder -on-start=/opt/galera/on-start-first.sh -service="${GALERA_SERVICE:-galera}"
 	fi
