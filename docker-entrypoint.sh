@@ -119,6 +119,7 @@ _select_start_node() {
 				continue
 		fi
 
+		echo  "deal with $_node_name"
 		while [ "1" = "1" ]
 		do
 				# curl -s -w "%{http_code}" -o /tmp/tmpFile  http://mysql-0.galera.default.svc.cluster.local:8899/wsrep
