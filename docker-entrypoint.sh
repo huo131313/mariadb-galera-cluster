@@ -110,50 +110,53 @@ _select_start_node() {
 
 	echo "" > /tmp/tmpFile
 	wsrep_result="$local_hostname" # 初始化本节点
+
+	echo "begin loop all nodes and find the first node  that allow start"
 	for _node_name in ${all_node_names[@]} 
 	do
-	if [[ "${_node_name}" == *"${local_hostname}"* ]]; then # 把自己排除出来， 不用获取自己的数据
-			echo  "exclude myself $_node_name"
-			continue
-	fi
+		if [[ "${_node_name}" == *"${local_hostname}"* ]]; then # 把自己排除出来， 不用获取自己的数据
+				echo  "exclude myself $_node_name"
+				continue
+		fi
 
-	while [ "1" = "1" ]
-	do
-			# curl -s -w "%{http_code}" -o /tmp/tmpFile  http://mysql-0.galera.default.svc.cluster.local:8899/wsrep
-			# curl -s -w "%{http_code}" -o /tmp/tmpFile  http://mysql-1.galera.default.svc.cluster.local:8899/wsrep
-			# curl -s -w "%{http_code}" -o /tmp/tmpFile  http://mysql-2.galera.default.svc.cluster.local:8899/wsrep
-			http_code=`curl -s -w "%{http_code}" -o /tmp/tmpFile  http://$_node_name:8899/wsrep`
-			if [ "$http_code" != "200" ]; then # 没有正常返回， 接着取
-				echo "curl failed : $http_code"
-				continue;
-			fi
+		while [ "1" = "1" ]
+		do
+				# curl -s -w "%{http_code}" -o /tmp/tmpFile  http://mysql-0.galera.default.svc.cluster.local:8899/wsrep
+				# curl -s -w "%{http_code}" -o /tmp/tmpFile  http://mysql-1.galera.default.svc.cluster.local:8899/wsrep
+				# curl -s -w "%{http_code}" -o /tmp/tmpFile  http://mysql-2.galera.default.svc.cluster.local:8899/wsrep
+				http_code=`curl -s -w "%{http_code}" -o /tmp/tmpFile  http://$_node_name:8899/wsrep`
+				if [ "$http_code" != "200" ]; then # 没有正常返回， 接着取
+					echo "curl failed : $http_code"
+					continue;
+				fi
 
-			#取到结果
-			tmp_wsrep=`cat /tmp/tmpFile`
-			echo "$http_code    ---   $tmp_wsrep"
+				#取到结果
+				tmp_wsrep=`cat /tmp/tmpFile`
+				echo "$http_code    ---   $tmp_wsrep"
 
-			wsrep_array=(${tmp_wsrep//:/ })
-			wsrep_position=${wsrep_array[1]}
-			wsrep_node=${wsrep_array[2]}
-			echo "1 2 : $wsrep_position  $wsrep_node"
+				wsrep_array=(${tmp_wsrep//:/ })
+				wsrep_position=${wsrep_array[1]}
+				wsrep_node=${wsrep_array[2]}
+				echo "1 2 : $wsrep_position  $wsrep_node"
 
 
-			## 本节点 number 大
-			if [ $local_wsrep_position -gt $wsrep_position ]; then
-				break;
-			fi
+				## 本节点 number 大
+				if [ $local_wsrep_position -gt $wsrep_position ]; then
+					break;
+				fi
 
-			###  number 相同 ， 取 hostname 小的节点 FINAL=`echo ${STR: -1}`
-			if [ $local_wsrep_position -eq $wsrep_position ] && [ ${wsrep_node: -1} -gt ${local_hostname: -1} ]; then
-				break;
-			fi
+				###  number 相同 ， 取 hostname 小的节点 FINAL=`echo ${STR: -1}`
+				if [ $local_wsrep_position -eq $wsrep_position ] && [ ${wsrep_node: -1} -gt ${local_hostname: -1} ]; then
+					break;
+				fi
 
-			wsrep_result=$wsrep_node
-			break
+				wsrep_result=$wsrep_node
+				break
+		done
 	done
-	done
+	echo " end loop all nodes and find the first node  that allow start"
 
-	echo “ result -----  $wsrep_result ---- ”
+	echo “result -----  $wsrep_result ----”
 
 	#如果选举的节点 最后是本节点则 则执行, 否则等到有一个节点起来了，再启动
 	if [ $wsrep_result != "$local_hostname" ] ; then
