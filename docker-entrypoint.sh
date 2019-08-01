@@ -176,7 +176,7 @@ _select_start_node() {
 						peer-finder -on-start=/opt/galera/on-start.sh -service="${GALERA_SERVICE:-galera}"
 					fi
 					echo "$_th_node_name has been started , so begin start node : $local_hostname"
-					exit 0   
+					return  
 				fi
 			done
 		done
@@ -190,7 +190,7 @@ _select_start_node() {
 		sed -i -e "s|^wsrep_cluster_address[[:space:]]*=.*$|wsrep_cluster_address=gcomm://|" /etc/mysql/conf.d/galera.cnf
 	fi
 
-	exit 0
+	return
 }
 
 
