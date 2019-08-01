@@ -378,6 +378,10 @@ echo " ----------------begin myinit.sh ----------------------"
 result = _select_start_node $start_pos_opt $MYSQL_ROOT_PASSWORD
 echo "选举结果： $result"
 
+# 正式启动数据库
+echo "finally exec: $@"
+exec "$@"
+
 # can_start=/myinit.sh $start_pos_opt $MYSQL_ROOT_PASSWORD)
 # if [ $? -eq 0 ]; then
 # 	echo "entrypoints.sh xxxxxxxx : $can_start "
