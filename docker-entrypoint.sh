@@ -114,7 +114,6 @@ _select_start_node() {
 
 	echo "local_wsrep_position :  $local_hostname $local_wsrep_position "
 
-	echo "" > /tmp/tmpFile
 	wsrep_result="$local_hostname" # 初始化本节点
 
 	#echo "begin loop all nodes and find the first node  that allow start"
@@ -128,7 +127,7 @@ _select_start_node() {
 			# curl -s -w "%{http_code}" -o /tmp/tmpFile  http://mysql-2.galera.default.svc.cluster.local:8899/wsrep
 			#echo "curl -s -w "%{http_code}" -o /tmp/tmpFile  http://$_node_name:8899/wsrep"
 			set +e 
-			http_code=`curl -s -w "%{http_code}" -o /tmp/tmpFile  http://$_s_node_name:8899/wsrep`
+			http_code=`curl -s -w "%{http_code}" -o /tmp/$_s_node_name  http://$_s_node_name:8899/wsrep`
 			set -e
 			if [ "$http_code" != "200" ]; then # 没有正常返回， 接着取
 				#echo "curl failed : $http_code"
@@ -136,13 +135,13 @@ _select_start_node() {
 			fi
 
 			#取到结果
-			tmp_wsrep=`cat /tmp/tmpFile`
+			tmp_wsrep=`cat /tmp/$_s_node_name`
 			echo "$http_code    ---   $tmp_wsrep"
 
 			wsrep_array=(${tmp_wsrep//:/ })
 			wsrep_position=${wsrep_array[1]}
 			wsrep_node=${wsrep_array[2]}
-			#echo "1 2 : $wsrep_position  $wsrep_node"
+			echo "wsrep_position, wsrep_node: $wsrep_position  $wsrep_node"
 
 			## 本节点 number 大
 			if [ $local_wsrep_position -gt $wsrep_position ]; then
@@ -150,7 +149,7 @@ _select_start_node() {
 			fi
 
 			###  number 相同 ， 取 hostname 小的节点 FINAL=`echo ${STR: -1}`
-			if [ $local_wsrep_position -eq $wsrep_position ] && [ ${wsrep_node: -1} -gt ${local_hostname: -1} ]; then
+			if [ $local_wsrep_position -eq $wsrep_position ] && [ ${wsrep_node: -1} -gt ${wsrep_result: -1} ]; then
 				break;
 			fi
 
@@ -158,13 +157,12 @@ _select_start_node() {
 			break
 		done
 	done
-	echo " end loop all nodes and find the first node  that allow start"
+	#echo " end loop all nodes and find the first node  that allow start"
 
 	echo "the first node should be  $wsrep_result "
 
 	#如果选举的节点 最后是本节点则 则执行, 否则等到有一个节点起来了，再启动
 	if [ $wsrep_result != "$local_hostname" ] ; then
-
 		while [ "1" = "1" ]
 		do
 			### 有其它数据库启动了 , 我就开始启动
@@ -175,6 +173,7 @@ _select_start_node() {
 					if hash peer-finder 2>/dev/null; then
 						peer-finder -on-start=/opt/galera/on-start.sh -service="${GALERA_SERVICE:-galera}"
 					fi
+
 					echo "$_th_node_name has been started , so begin start node : $local_hostname"
 					return  
 				fi
@@ -290,11 +289,11 @@ if [ "$1" = 'mysqld' -a -z "$wantHelp" ]; then
 		fi
 
 		# 解决时区bug
-		echo "MYSQL_INITDB_SKIP_TZINFO is $MYSQL_INITDB_SKIP_TZINFO"
-		if [ -z "$MYSQL_INITDB_SKIP_TZINFO" ]; then
-			# sed is for https://bugs.mysql.com/bug.php?id=20545
-			mysql_tzinfo_to_sql /usr/share/zoneinfo | sed 's/Local time zone must be set--see zic manual page/FCTY/' | "${mysql[@]}" mysql
-		fi
+		# echo "MYSQL_INITDB_SKIP_TZINFO is $MYSQL_INITDB_SKIP_TZINFO"
+		# if [ -z "$MYSQL_INITDB_SKIP_TZINFO" ]; then
+		# 	# sed is for https://bugs.mysql.com/bug.php?id=20545
+		# 	mysql_tzinfo_to_sql /usr/share/zoneinfo | sed 's/Local time zone must be set--see zic manual page/FCTY/' | "${mysql[@]}" mysql
+		# fi
 
 		# 生成root随机密码  不会用
 		if [ ! -z "$MYSQL_RANDOM_ROOT_PASSWORD" ]; then
