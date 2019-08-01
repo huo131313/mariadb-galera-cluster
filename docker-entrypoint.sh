@@ -242,14 +242,18 @@ if [ "$1" = 'mysqld' -a -z "$wantHelp" ]; then
 
 	#启动rest 服务， 供查询使用
 	nohup galera-peer-finder -position=$start_pos_opt &
+	echo " ----------------begin myinit.sh ----------------------"
+	file_env 'MYSQL_ROOT_PASSWORD'
+	_select_start_node "$start_pos_opt" "$MYSQL_ROOT_PASSWORD"
+	echo "选举结果： $result"
 
 	# Get config
 	DATADIR="$(_datadir "$@")"
 	echo "DATADIR is : $DATADIR"
 
-	# 若mysql数据库未创建，则执行本段逻辑
+	# 若mysql数据库未创建，则执行本段逻辑 
 	if [ ! -d "$DATADIR/mysql" ]; then
-		file_env 'MYSQL_ROOT_PASSWORD'
+		#file_env 'MYSQL_ROOT_PASSWORD'
 		if [ -z "$MYSQL_ROOT_PASSWORD" -a -z "$MYSQL_ALLOW_EMPTY_PASSWORD" -a -z "$MYSQL_RANDOM_ROOT_PASSWORD" ]; then
 			echo >&2 'error: database is uninitialized and password option is not specified '
 			echo >&2 '  You need to specify one of MYSQL_ROOT_PASSWORD, MYSQL_ALLOW_EMPTY_PASSWORD and MYSQL_RANDOM_ROOT_PASSWORD'
@@ -374,9 +378,9 @@ fi
 sed -i -e "s|^wsrep_sst_auth[[:space:]]*=.*$|wsrep_sst_auth=root:${MYSQL_ROOT_PASSWORD}|" "/etc/mysql/conf.d/galera.cnf"
 
 
-echo " ----------------begin myinit.sh ----------------------"
-result=_select_start_node $start_pos_opt $MYSQL_ROOT_PASSWORD
-echo "选举结果： $result"
+# echo " ----------------begin myinit.sh ----------------------"
+# result=_select_start_node $start_pos_opt $MYSQL_ROOT_PASSWORD
+# echo "选举结果： $result"
 
 # 正式启动数据库
 echo "finally exec: $@"
