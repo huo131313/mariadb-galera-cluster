@@ -139,8 +139,6 @@ spec:
           mountPath: /etc/mysql/conf.d
         - name: datadir
           mountPath: /var/lib/mysql
-        - name: middle-data
-          mountPath: /middle/
       volumes:
       - name: config
         emptyDir: {}
@@ -152,9 +150,6 @@ spec:
               key: galera.cnf
             - path: "mariadb.cnf"
               key: mariadb.cnf
-      - name: middle-data
-        persistentVolumeClaim:
-          claimName: middle-data
   volumeClaimTemplates:
   - metadata:
       name: datadir
