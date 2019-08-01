@@ -98,12 +98,12 @@ _select_start_node() {
 	for i in ${!all_node_names[@]}
 	do
 		if [[ "${all_node_names[$i]}" == *"${local_hostname}"* ]]; then # 把自己排除出来， 不用获取自己的数据
-				echo  "exclude myself $_node_name"
+				echo  "exclude myself ${all_node_names[$i]}"
 				continue
 		fi
 		other_nodes[count++]=${all_node_names[$i]}
 	done
-	echo "$other_nodes"
+	echo "${other_nodes[*]}"
 
 
 	###  其它数据库都没有启动 开始选举， 如果有一个启动了 ， 常规启动不需要选举了
