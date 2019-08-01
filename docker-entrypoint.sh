@@ -7,8 +7,6 @@ if [ "$TRACE" = "1" ]; then
 	set -x   #运行结果之前，先输出执行的指令
 fi
 
-echo "args source  ： $@"
-
 ################################################################
 # 若启动命令时附加了参数，则在参数前添加mysqld，如$0 -f test，则经过此代码处理后，
 # $@参数变mysqld -f test。其中${1:0:1}从$1参数第0个位置取1字符，如$1为-f，则
@@ -21,7 +19,6 @@ if [ "${1:0:1}" = '-' ]; then
     # "set --" 后有内容，当前 shell 脚本的参数被替换为 "set --" 后的内容，$1 $? $@ 等相应地被改变。
 	set -- mysqld "$@"
 fi
-echo "args after set： $@"
 
 # 解析参数，是否是获取帮助信息参数，并设置wantHelp值
 # skip setup if they want an option that stops mysqld
@@ -130,15 +127,15 @@ _select_start_node() {
 			# curl -s -w "%{http_code}" -o /tmp/tmpFile  http://mysql-1.galera.default.svc.cluster.local:8899/wsrep
 			# curl -s -w "%{http_code}" -o /tmp/tmpFile  http://mysql-2.galera.default.svc.cluster.local:8899/wsrep
 			#echo "curl -s -w "%{http_code}" -o /tmp/tmpFile  http://$_node_name:8899/wsrep"
-			http_code=`curl -s -w "%{http_code}" -o /tmp/tmpFile  http://$_s_node_name:8899/wsrep`
-			if [ "$http_code" != "200" ]; then # 没有正常返回， 接着取
+			
+			if curl -s -w "%{http_code}" -o /tmp/tmpFile  http://$_s_node_name:8899/wsrep &> /dev/null ; then # 没有正常返回， 接着取
 				#echo "curl failed : $http_code"
 				continue;
 			fi
 
 			#取到结果
 			tmp_wsrep=`cat /tmp/tmpFile`
-			echo "$http_code    ---   $tmp_wsrep"
+			echo "curl result : $tmp_wsrep"
 
 			wsrep_array=(${tmp_wsrep//:/ })
 			wsrep_position=${wsrep_array[1]}
