@@ -32,7 +32,11 @@ func getWsrepStartPosition(w http.ResponseWriter, r *http.Request) {
 		log.Fatalf("Failed to get hostname: %s", err)
 	}
 
-	fmt.Fprintf(w,  *position + ":" + hostname) //这个写入到w的是输出到客户端的
+	if *position == "" {
+		fmt.Fprintf(w, "0:0:" + hostname)
+	}else{
+		fmt.Fprintf(w,  *position + ":" + hostname) //这个写入到w的是输出到客户端的
+	}
 }
 
 func getDomain() {
