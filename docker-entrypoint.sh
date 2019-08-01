@@ -82,6 +82,119 @@ _datadir() {
 }
 
 
+all_node_names=("mysql-0.galera.default.svc.cluster.local" "mysql-1.galera.default.svc.cluster.local" "mysql-2.galera.default.svc.cluster.local") 
+_select_start_node() {
+
+	###  3 个数据库都没有启动 开始选举， 如果有一个启动了 ， 常规启动不需要选举了
+	for _f_node_name in ${all_node_names[@]} 
+	do
+		if echo 'SELECT 1' | mysql -uroot -p123456a? -h${_f_node_name}  &> /dev/null; then
+			echo "$_f_node_name has been started ..."
+			exit 0  
+		fi
+	done
+
+	####################### 本节点 host name     ###############
+	local_hostname=$(hostname)
+	###################  本节点  wsrep  position   ###############      
+	local_wsrep_position=0
+	echo "init args: $1"
+	if  [ $1 ] ; then
+		local_wsrep_array=(${1//:/ })
+		local_wsrep_position=${local_wsrep_array[1]}
+	fi
+
+	echo "local_wsrep_position :  $local_hostname $local_wsrep_position "
+
+	echo "" > /tmp/tmpFile
+	wsrep_result="$local_hostname" # 初始化本节点
+
+	#echo "begin loop all nodes and find the first node  that allow start"
+	for _node_name in ${all_node_names[@]} 
+	do
+		if [[ "${_node_name}" == *"${local_hostname}"* ]]; then # 把自己排除出来， 不用获取自己的数据
+				echo  "exclude myself $_node_name"
+				continue
+		fi
+
+		echo  "deal with $_node_name"
+		while [ "1" = "1" ]
+		do
+				# curl -s -w "%{http_code}" -o /tmp/tmpFile  http://mysql-0.galera.default.svc.cluster.local:8899/wsrep
+				# curl -s -w "%{http_code}" -o /tmp/tmpFile  http://mysql-1.galera.default.svc.cluster.local:8899/wsrep
+				# curl -s -w "%{http_code}" -o /tmp/tmpFile  http://mysql-2.galera.default.svc.cluster.local:8899/wsrep
+				#echo "curl -s -w "%{http_code}" -o /tmp/tmpFile  http://$_node_name:8899/wsrep"
+				http_code=`curl -s -w "%{http_code}" -o /tmp/tmpFile  http://$_node_name:8899/wsrep`
+				if [ "$http_code" != "200" ]; then # 没有正常返回， 接着取
+					#echo "curl failed : $http_code"
+					continue;
+				fi
+
+				#取到结果
+				tmp_wsrep=`cat /tmp/tmpFile`
+				echo "$http_code    ---   $tmp_wsrep"
+
+				wsrep_array=(${tmp_wsrep//:/ })
+				wsrep_position=${wsrep_array[1]}
+				wsrep_node=${wsrep_array[2]}
+				#echo "1 2 : $wsrep_position  $wsrep_node"
+
+				## 本节点 number 大
+				if [ $local_wsrep_position -gt $wsrep_position ]; then
+					break;
+				fi
+
+				###  number 相同 ， 取 hostname 小的节点 FINAL=`echo ${STR: -1}`
+				if [ $local_wsrep_position -eq $wsrep_position ] && [ ${wsrep_node: -1} -gt ${local_hostname: -1} ]; then
+					break;
+				fi
+
+				wsrep_result=$wsrep_node
+				break
+		done
+	done
+	echo " end loop all nodes and find the first node  that allow start"
+
+	echo "the first node should be  $wsrep_result "
+
+	#如果选举的节点 最后是本节点则 则执行, 否则等到有一个节点起来了，再启动
+	if [ $wsrep_result != "$local_hostname" ] ; then
+
+		while [ "1" = "1" ]
+		do
+			### begin  3 个数据库都没有启动 ， 如果有一个启动了 ， 直接0 , 常规启动就ok
+			for _ss_node_name in ${all_node_names[@]} 
+			do
+				if [[ "${_ss_node_name}" == *"${local_hostname}"* ]]; then # 把自己排除出来， 不检查
+					#echo  "exclude myself $_ss_node_name"
+					continue
+				fi
+
+				if echo 'SELECT 1' | mysql -uroot -p123456a? -h${_ss_node_name}  &> /dev/null; then
+
+					# Run Galera at non-first node on Kubernetes
+					if hash peer-finder 2>/dev/null; then
+						peer-finder -on-start=/opt/galera/on-start.sh -service="${GALERA_SERVICE:-galera}"
+					fi
+					echo "$_ss_node_name has been started , so begin start node : $local_hostname"
+					exit 0   
+				fi
+			done
+		done
+	else
+		# Run Galera at first node on Kubernetes
+		# if hash peer-finder 2>/dev/null; then
+		#     peer-finder -on-start=/opt/galera/on-start-first.sh -service="${GALERA_SERVICE:-galera}"
+		# fi
+
+		# hard code , first node should be wsrep_cluster_address=gcomm://
+		sed -i -e "s|^wsrep_cluster_address[[:space:]]*=.*$|wsrep_cluster_address=gcomm://|" /etc/mysql/conf.d/galera.cnf
+	fi
+
+	exit 0
+}
+
+
 # 1. $1参数为mysqld 以及 wanthelp 参数为空 以及root用户，执行此代码；
 # 2. _check_config检查配置文件是否正确
 # 3. 获取DATADIR目录，执行mysqld --verbose --help --log-bin-index=/tmp/tmp.4SyApJWeIo| \
@@ -120,16 +233,15 @@ if [ "$1" = 'mysqld' -a -z "$wantHelp" ]; then
 		set -e
 		if [ $? -eq 0 ]; then
 			echo "Galera recovery position: $start_pos_opt"
-			set -- "$@" $start_pos_opt
-
-			#启动rest 服务， 供查询使用
-			nohup galera-peer-finder -position=$start_pos_opt &
-	
+			set -- "$@" $start_pos_opt	
 		else
 			echo "FATAL - Galera recovery failed!"
 			exit 1
 		fi
 	fi
+
+	#启动rest 服务， 供查询使用
+	nohup galera-peer-finder -position=$start_pos_opt &
 
 	# Get config
 	DATADIR="$(_datadir "$@")"
@@ -261,17 +373,21 @@ fi
 #######  wsrep_sst_method=mariabackup wsrep_sst_auth=  ########
 sed -i -e "s|^wsrep_sst_auth[[:space:]]*=.*$|wsrep_sst_auth=root:${MYSQL_ROOT_PASSWORD}|" "/etc/mysql/conf.d/galera.cnf"
 
+
 echo " ----------------begin myinit.sh ----------------------"
-can_start=$(/myinit.sh $start_pos_opt $MYSQL_ROOT_PASSWORD)
-if [ $? -eq 0 ]; then
-	echo "entrypoints.sh xxxxxxxx : $can_start "
-	# 正式启动数据库
-	echo "finally exec: $@"
-	exec "$@"
-else
-	echo " ----------------failed myinit.sh ----------------------"
-	exit 1
-fi
+result = _select_start_node $start_pos_opt $MYSQL_ROOT_PASSWORD
+echo "选举结果： $result"
+
+# can_start=/myinit.sh $start_pos_opt $MYSQL_ROOT_PASSWORD)
+# if [ $? -eq 0 ]; then
+# 	echo "entrypoints.sh xxxxxxxx : $can_start "
+# 	# 正式启动数据库
+# 	echo "finally exec: $@"
+# 	exec "$@"
+# else
+# 	echo " ----------------failed myinit.sh ----------------------"
+# 	exit 1
+# fi
 
 
 
